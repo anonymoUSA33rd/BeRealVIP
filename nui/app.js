@@ -1,39 +1,45 @@
-window.addEventListener('message', function(event) {
-  let data = event.data;
-  if (data.type === 'openUI') {
-    let sections = data.sections;
-    let sectionsContainer = document.getElementById('sections');
-    sectionsContainer.innerHTML = ''; // Clear previous sections
-    
-    // Dynamically generate the vehicle sections and list the vehicles
-    sections.forEach(section => {
-      let sectionElement = document.createElement('div');
-      sectionElement.innerHTML = `<h2>${section.label}</h2>`;
-      
-      section.vehicles.forEach(vehicle => {
-        let vehicleButton = document.createElement('button');
-        vehicleButton.innerHTML = vehicle;
-        vehicleButton.onclick = function() {
-          // Request the server to spawn the selected vehicle
-          fetch(`https://${GetParentResourceName()}/spawnVehicle`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ vehicleModel: vehicle, sectionId: section.id }),
-          });
-        };
-        sectionElement.appendChild(vehicleButton);
-      });
+// Function to close the UI
+function closeUI() {
+    fetch(`https://${GetParentResourceName()}/closeUI`, { method: 'POST' });
+}
 
-      sectionsContainer.appendChild(sectionElement);
-    });
-  }
+// Close button listener
+document.getElementById('close-button').addEventListener('click', closeUI);
+
+// ESC key listener
+document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") closeUI();
 });
 
-// Event listener to close the UI
-document.addEventListener('keydown', function(event) {
-  if (event.key === "Escape") {
-    fetch(`https://${GetParentResourceName()}/closeUI`, { method: 'POST' });
-  }
+// Listen for data from the client
+window.addEventListener('message', function(event) {
+    const data = event.data;
+    if (data.type === 'openUI') {
+        const sections = data.sections;
+        const sectionsContainer = document.getElementById('sections');
+        sectionsContainer.innerHTML = ''; // Clear previous sections
+
+        // Generate sections dynamically
+        sections.forEach(section => {
+            const sectionElement = document.createElement('div');
+            sectionElement.classList.add('section');
+            sectionElement.innerHTML = `<h2>${section.label}</h2>`;
+
+            // Generate buttons for each vehicle
+            section.vehicles.forEach(vehicle => {
+                const vehicleButton = document.createElement('button');
+                vehicleButton.innerHTML = vehicle;
+                vehicleButton.onclick = function() {
+                    fetch(`https://${GetParentResourceName()}/spawnVehicle`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ vehicleModel: vehicle, sectionId: section.id })
+                    });
+                };
+                sectionElement.appendChild(vehicleButton);
+            });
+
+            sectionsContainer.appendChild(sectionElement);
+        });
+    }
 });
